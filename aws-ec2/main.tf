@@ -163,10 +163,10 @@ install_boot_script() {
 
   get_env_from_variable() {
     cat <<ENV
-    ${join("\n", [
-      for key, value in var.environment:
-      "${key}=${value}"
-    ])}
+${join("\n", [
+  for key, value in var.environment:
+  "${key}=${value}"
+])}
 ENV
   }
 
