@@ -1,9 +1,17 @@
-variable "install_script" {
+variable "docker_compose_yaml" {
+  type = string
+}
+
+variable "name" {
+  type = string
+}
+
+variable "prefix" {
   type = string
   default = ""
 }
 
-variable "maintenance_script" {
+variable "suffix" {
   type = string
   default = ""
 }
@@ -13,20 +21,6 @@ variable "published_ports" {
   default = []
 }
 
-variable "name" {
-  type = string
-}
-
-variable "suffix" {
-  type = string
-  default = ""
-}
-
-variable "prefix" {
-  type = string
-  default = ""
-}
-
 variable "tags" {
   type = map(string)
   default = {}
@@ -34,12 +28,10 @@ variable "tags" {
 
 variable "aws_region" {
   type = string
-  default = "us-east-1"
 }
 
 variable "aws_account" {
   type = string
-  default = null
 }
 
 variable "aws_log_group" {

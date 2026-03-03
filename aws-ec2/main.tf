@@ -127,7 +127,7 @@ install_boot_script() {
     cd /home/ec2-user/
 
     while true; do 
-      get_all_secrets > .env
+      generate_env_file > .env
       maintenance
       sleep ${var.sync_period}
     done
@@ -155,7 +155,23 @@ install_boot_script() {
     true
   }
 
-  get_all_secrets() {
+  generate_env_file() {
+    get_env_from_secrets
+    get_env_from_variable
+    
+  }
+
+  get_env_from_variable() {
+    cat <<ENV
+    ${join("\n", [
+      for key, value in var.environment:
+      "${key}=${value}"
+    ])}
+ENV
+  }
+
+
+  get_env_from_secrets() {
     noop
 
     ${join("\n", [

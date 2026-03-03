@@ -8,6 +8,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 - Optionally creates and attaches an IAM role and instance profile, or attaches an existing one
 - Supports execution of custom install and maintenance scripts via user data
 - Automatically fetches secrets from AWS Secrets Manager and exposes them as environment variables
+- **Allows setting static environment variables via the `environment` variable**
 - Tags resources appropriately for traceability
 
 ## Usage Example
@@ -29,6 +30,10 @@ module "ec2" {
   secrets = {
     "APP" = "my/app/secret"
   }
+  environment = {
+    FOO = "bar"
+    BAZ = "qux"
+  }
 }
 ```
 
@@ -48,6 +53,7 @@ module "ec2" {
 | `instance_type`      | string        | `"t3.micro"` | EC2 instance type |
 | `access_key`         | string        | `null`        | SSH key name for instance access (enables port 22/SSH) |
 | `secrets`            | map(string)   | `{}`          | Map of environment prefix to AWS Secrets Manager secret ID |
+| `environment`        | map(string)   | `{}`          | Static environment variables to make available to the scripts |
 | `sync_period`        | number        | `600`         | Seconds between maintenance/script runs |
 | `permissions_boundary`| string       | `null`        | IAM permissions boundary ARN (optional) |
 | `vpc_id`             | string        | required      | VPC ID for the instance |
