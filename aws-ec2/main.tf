@@ -100,16 +100,58 @@ BOOT_SCRIPT=/var/lib/cloud/scripts/per-boot/run-services.sh
 export AWS_REGION="${var.aws_region}"
 export AWS_LOG_GROUP="${var.aws_log_group}"
 export EC2_HOSTNAME="${var.prefix}${var.name}${var.suffix}"
+export LOG_FILE="/var/log/install.log"
 
 main() {
+  setup | tee $LOG_FILE
+  run_boot_script "$BOOT_SCRIPT"
+}
+
+setup() {
+  install_cloudwatch_logging
   install_requirements
   install_boot_script "$BOOT_SCRIPT"
-  run_boot_script "$BOOT_SCRIPT"
 }
 
 install_requirements() {
   noop
   ${var.install_script}
+}
+
+install_cloudwatch_logging() {
+  # Install CloudWatch Logs agent
+  dnf install -y amazon-cloudwatch-agent jq
+
+  # Configure awslogs to use the correct region and log group
+  sed -i "s/region = .*/region = ${var.aws_region}/" /etc/awslogs/awscli.conf
+  sudo mkdir -p /etc/awslogs/config/
+  cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOL
+  {
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/*.log",
+            "log_group_name": "$AWS_LOG_GROUP",
+            "log_stream_name": "tf-aws-ec2",
+            "retention_in_days": 7
+          }
+        ]
+      }
+    }
+  }
+}
+EOL
+
+  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config \
+  -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+  -s
+
+  systemctl enable amazon-cloudwatch-agent
+
 }
 
 install_boot_script() {
@@ -122,6 +164,7 @@ install_boot_script() {
   export AWS_REGION="${var.aws_region}"
   export AWS_LOG_GROUP="${var.aws_log_group}"
   export EC2_HOSTNAME="${var.prefix}${var.name}${var.suffix}"
+  export LOG_FILE="/var/log/run.log"
 
   main() {
     cd /home/ec2-user/
@@ -158,7 +201,15 @@ install_boot_script() {
   generate_env_file() {
     get_env_from_secrets
     get_env_from_variable
-    
+    get_env_from_ec2_config
+  }
+
+  get_env_from_ec2_config() {
+    cat <<ENV
+AWS_REGION="${var.aws_region}"
+AWS_LOG_GROUP="${var.aws_log_group}"
+EC2_HOSTNAME="${var.prefix}${var.name}${var.suffix}"
+ENV
   }
 
   get_env_from_variable() {
@@ -180,7 +231,7 @@ ENV
     ])}
   }
 
-  main
+  main | tee > $LOG_FILE 2>&1
 BASH
 
   chmod +x "$SCRIPT"

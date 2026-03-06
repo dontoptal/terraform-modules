@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+- Updated to use aws-ec2-v1.2.0 module.
+- Add support for `sync_period` variable.
+- Maintenance script now ensures it returns to the parent directory after running.
+- Install script logs installed docker-compose.yml for debugging.
+- Improved logging and output during initial install.
+
 ## 1.0.1
 - Remove indenting on the .env file.
 

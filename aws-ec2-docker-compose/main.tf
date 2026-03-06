@@ -3,7 +3,7 @@ locals {
 }
 
 module "ec2" {
-  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.1.1"
+  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.2.0"
   aws_region = var.aws_region
   name = var.name
   prefix = var.prefix
@@ -17,6 +17,8 @@ module "ec2" {
   subnet_ids = var.subnet_ids
   secrets = var.secrets
   environment = var.environment
+  sync_period = var.sync_period
+
   install_script = <<EOF
   dnf update -y
   dnf install -y docker git
@@ -52,7 +54,13 @@ module "ec2" {
         | from_entries
       )
   ' "/tmp/docker-compose.yml" > /home/ec2-user/myapp/docker-compose.yml
+  echo "Installed docker-compose.yml"
+  echo
+  cat /home/ec2-user/myapp/docker-compose.yml
+  echo
+  echo
   EOF
+
 
   maintenance_script = <<EOF
   ensure_services_are_up_to_date_and_running() {
@@ -63,6 +71,8 @@ module "ec2" {
     docker_login
     docker-compose pull
     docker-compose up -d --build
+
+    cd ..
   }
 
   docker_login() {
