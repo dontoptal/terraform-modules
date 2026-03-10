@@ -59,6 +59,8 @@ module "ec2" {
   cat /home/ec2-user/myapp/docker-compose.yml
   echo
   echo
+
+  ${var.install_script}
   EOF
 
 
@@ -71,6 +73,8 @@ module "ec2" {
     docker_login
     docker-compose pull
     docker-compose up -d --build
+
+    ${var.maintenance_script}
 
     cd ..
   }

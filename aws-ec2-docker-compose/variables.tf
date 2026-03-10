@@ -70,7 +70,7 @@ variable "vpc_id" {
   type = string
 }
 
-variable "subnet_ids" {
+variable "subnet_ids"{
   type = list(string)
 }
 
@@ -84,4 +84,16 @@ variable "environment" {
   type = map(string)
   default = {}
   description = "Static environment variables to make available to the scripts"
+}
+
+variable "install_script" {
+  type = string
+  default = ""
+  description = "Additional bash script to run during install, after Docker Compose setup."
+}
+
+variable "maintenance_script" {
+  type = string
+  default = ""
+  description = "Additional bash script to run as part of the maintenance cycle, after docker-compose up."
 }

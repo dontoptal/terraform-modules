@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+- Add `install_script` and `maintenance_script` variables for custom user logic.
+- Documented the new variables in README and variables.tf.
+
 ## 1.1.0
 - Updated to use aws-ec2-v1.2.0 module.
 - Add support for `sync_period` variable.

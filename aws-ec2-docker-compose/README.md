@@ -11,6 +11,7 @@ This Terraform module (`aws-ec2-docker-compose`) provisions an EC2 instance pre-
 - Supports custom VPC, subnet, and tagging
 - Allows existing IAM instance profile to be attached, or creates a new one
 - Supports static environment variables
+- Supports custom install and maintenance scripts (`install_script`, `maintenance_script`)
 
 ## Usage Example
 ```hcl
@@ -37,6 +38,14 @@ module "ec2_docker_compose" {
     ENVIRONMENT = "dev"
     FOO         = "bar"
   }
+  install_script = <<EOF
+    # Custom install commands here
+    echo "Custom install logic"
+  EOF
+  maintenance_script = <<EOF
+    # Custom maintenance commands here
+    echo "Custom maintenance logic"
+  EOF
 }
 ```
 
@@ -61,6 +70,8 @@ module "ec2_docker_compose" {
 | `subnet_ids`          | list(string)   | List of subnet IDs (first is used) |
 | `iam_role_arn`        | string         | Existing IAM role/profile ARN to attach (optional) |
 | `environment`         | map(string)    | Static environment variables to make available to the scripts |
+| `install_script`      | string         | Additional bash script to run during install, after Docker Compose setup |
+| `maintenance_script`  | string         | Additional bash script to run as part of the maintenance cycle, after docker-compose up |
 
 See `variables.tf` for full details.
 
@@ -75,6 +86,7 @@ See `variables.tf` for full details.
 - Secrets from AWS Secrets Manager are fetched and injected as environment variables, prefixed with your chosen key (e.g. `APP_DATABASE_PASSWORD`).
 - The instance runs a periodic maintenance script that pulls new images, refreshes secrets, and restarts services as necessary.
 - Static environment variables provided via the `environment` variable are made available to the scripts.
+- You can append custom logic to the install and maintenance phases via `install_script` and `maintenance_script` variables.
 
 ## Requirements
 - Terraform 0.13+
