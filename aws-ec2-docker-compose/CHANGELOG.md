@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1
+- Add `aws_log_retention_days` variable (default: 90) and propagate to EC2 module for CloudWatch log retention configuration.
+
 ## 1.2.0
 - Add `install_script` and `maintenance_script` variables for custom user logic.
 - Documented the new variables in README and variables.tf.

@@ -9,6 +9,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 - Supports execution of custom install and maintenance scripts via user data
 - Automatically fetches secrets from AWS Secrets Manager and exposes them as environment variables
 - **Allows setting static environment variables via the `environment` variable**
+- **Supports configurable CloudWatch log retention days via `aws_log_retention_days` (default: 90)**
 - Tags resources appropriately for traceability
 
 ## Usage Example
@@ -20,6 +21,7 @@ module "ec2" {
   subnet_ids        = ["subnet-1234abcd"]
   aws_region        = "us-east-1"
   aws_log_group     = "/aws/custom/app-server"
+  aws_log_retention_days = 60 # <--- Optional! Default: 90
   published_ports   = [8080, 443]
   access_key        = "my-ssh-key"
   instance_type     = "t3.micro"
@@ -50,6 +52,7 @@ module "ec2" {
 | `aws_region`         | string        | `"us-east-1"`| AWS region |
 | `aws_account`        | string        | `null`        | AWS account number (optional) |
 | `aws_log_group`      | string        | required      | CloudWatch log group name |
+| `aws_log_retention_days` | number     | `90`          | Number of days to retain CloudWatch log streams |
 | `instance_type`      | string        | `"t3.micro"` | EC2 instance type |
 | `access_key`         | string        | `null`        | SSH key name for instance access (enables port 22/SSH) |
 | `secrets`            | map(string)   | `{}`          | Map of environment prefix to AWS Secrets Manager secret ID |

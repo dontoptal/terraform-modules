@@ -3,7 +3,7 @@ locals {
 }
 
 module "ec2" {
-  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.2.0"
+  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.2.1"
   aws_region = var.aws_region
   name = var.name
   prefix = var.prefix
@@ -18,6 +18,7 @@ module "ec2" {
   secrets = var.secrets
   environment = var.environment
   sync_period = var.sync_period
+  aws_log_retention_days = var.aws_log_retention_days
 
   install_script = <<EOF
   dnf update -y

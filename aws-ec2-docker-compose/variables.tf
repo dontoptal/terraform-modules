@@ -38,6 +38,12 @@ variable "aws_log_group" {
   type = string
 }
 
+variable "aws_log_retention_days" {
+  type = number
+  default = 90
+  description = "Number of days to retain CloudWatch log streams (log_retention). Used by the EC2 instance for log retention."
+}
+
 variable "instance_type" {
   type = string
   default = "t3.micro"

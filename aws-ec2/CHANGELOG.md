@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1
+- Add `aws_log_retention_days` variable (default: 90) to control CloudWatch log retention days for agent configuration.
+
 ## 1.2.0
 - Add support for CloudWatch Agent installation and logs collection.
 - Add `LOG_FILE` variable for install and run scripts with output redirection.

@@ -135,7 +135,7 @@ install_cloudwatch_logging() {
             "file_path": "/var/log/*.log",
             "log_group_name": "$AWS_LOG_GROUP",
             "log_stream_name": "tf-aws-ec2",
-            "retention_in_days": 7
+            "retention_in_days": ${var.aws_log_retention_days}
           }
         ]
       }

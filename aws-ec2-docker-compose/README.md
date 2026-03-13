@@ -12,6 +12,7 @@ This Terraform module (`aws-ec2-docker-compose`) provisions an EC2 instance pre-
 - Allows existing IAM instance profile to be attached, or creates a new one
 - Supports static environment variables
 - Supports custom install and maintenance scripts (`install_script`, `maintenance_script`)
+- **Supports configurable CloudWatch log retention days via `aws_log_retention_days` (default: 90)**
 
 ## Usage Example
 ```hcl
@@ -23,6 +24,7 @@ module "ec2_docker_compose" {
   aws_region           = "us-east-1"
   aws_account          = "123456789012"
   aws_log_group        = "/aws/my-app/logs"
+  aws_log_retention_days = 30 # <--- Optional! Default: 90
   published_ports      = [80, 443]
   vpc_id               = "vpc-xxxxxxxx"
   subnet_ids           = ["subnet-xxxxxxxx"]
@@ -61,6 +63,7 @@ module "ec2_docker_compose" {
 | `aws_region`          | string         | AWS region |
 | `aws_account`         | string         | AWS Account number |
 | `aws_log_group`       | string         | CloudWatch log group name |
+| `aws_log_retention_days` | number      | Number of days to retain log streams (default: 90) |
 | `instance_type`       | string         | EC2 instance type (default: t3.micro) |
 | `access_key`          | string         | SSH key name for instance access (optional) |
 | `secrets`             | map(string)    | Map of env var prefix to AWS Secrets Manager secret ID |
@@ -87,6 +90,7 @@ See `variables.tf` for full details.
 - The instance runs a periodic maintenance script that pulls new images, refreshes secrets, and restarts services as necessary.
 - Static environment variables provided via the `environment` variable are made available to the scripts.
 - You can append custom logic to the install and maintenance phases via `install_script` and `maintenance_script` variables.
+- **You can control CloudWatch log retention days using the `aws_log_retention_days` variable (default: 90)**
 
 ## Requirements
 - Terraform 0.13+
