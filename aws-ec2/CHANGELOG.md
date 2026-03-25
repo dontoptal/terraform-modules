@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.2
+- Fix: Quote variable values in generated `.env` file for improved Bash compatibility.
+
 ## 1.2.1
 - Add `aws_log_retention_days` variable (default: 90) to control CloudWatch log retention days for agent configuration.
 

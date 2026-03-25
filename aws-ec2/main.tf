@@ -216,7 +216,7 @@ ENV
     cat <<ENV
 ${join("\n", [
   for key, value in var.environment:
-  "${key}=${value}"
+  "${key}=\"${value}\""
 ])}
 ENV
   }

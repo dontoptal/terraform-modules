@@ -3,7 +3,7 @@ locals {
 }
 
 module "ec2" {
-  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.2.1"
+  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.2.2"
   aws_region = var.aws_region
   name = var.name
   prefix = var.prefix
