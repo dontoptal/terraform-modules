@@ -74,6 +74,7 @@ module "ec2" {
     docker_login
     docker-compose pull
     docker-compose up -d --build
+    docker system prune -f
 
     ${var.maintenance_script}
 

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.3
+- Fix: Added docker garbage collection to prevent disk usage spiralling
+
 ## 1.2.2
 - Fix: Quote variable values in generated `.env` file for improved Bash compatibility.
 
