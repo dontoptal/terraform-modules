@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.3
+- Fix: Fixed indentation of generated shell script.
+
 ## 1.2.2
 - Fix: Quote variable values in generated `.env` file for improved Bash compatibility.
 

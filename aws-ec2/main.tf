@@ -157,7 +157,7 @@ EOL
 install_boot_script() {
   SCRIPT="$1"
 
-  cat > "$SCRIPT" <<'BASH'
+  (cat <<'BASH'
   #!/bin/bash -x
 
   PATH=$PATH:/usr/local/bin/
@@ -233,6 +233,7 @@ ENV
 
   main | tee > $LOG_FILE 2>&1
 BASH
+) | sed 's/^  //' > "$SCRIPT"
 
   chmod +x "$SCRIPT"
 }

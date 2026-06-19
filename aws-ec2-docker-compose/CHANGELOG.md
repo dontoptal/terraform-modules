@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.4
+- Fix: Updated aws-ec2 dependency to 1.2.3 for shell script indentation fix.
+
 ## 1.2.3
 - Fix: Added docker garbage collection to prevent disk usage spiralling
 
