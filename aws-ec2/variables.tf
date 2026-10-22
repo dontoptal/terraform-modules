@@ -99,3 +99,13 @@ variable "environment" {
   default = {}
   description = "Static environment variables to make available to the scripts"
 }
+
+variable "volumes" {
+  type = map(object({
+    id          = string
+    device_name = string
+    format      = optional(bool, false)
+  }))
+  default = {}
+  description = "Map of mount points to EBS volume configuration. Key is the mount point path, value contains: id (vol-xxx), device_name (/dev/sdf), format (optional bool, default false - if true, will create ext4 filesystem if volume is unformatted)"
+}

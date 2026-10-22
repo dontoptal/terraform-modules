@@ -9,3 +9,8 @@ output "iam_role" {
 output "ec2_instance" {
   value = aws_instance.instance
 }
+
+output "volume_attachments" {
+  value = length(var.volumes) > 0 ? aws_volume_attachment.volume_attach : {}
+  description = "Map of volume attachment resources (empty if no volumes attached)"
+}

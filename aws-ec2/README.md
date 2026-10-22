@@ -15,7 +15,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 ## Usage Example
 ```hcl
 module "ec2" {
-  source            = "./aws-ec2"
+  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.3.0"
   name              = "app-server"
   vpc_id            = "vpc-12345678"
   subnet_ids        = ["subnet-1234abcd"]
@@ -35,6 +35,18 @@ module "ec2" {
   environment = {
     FOO = "bar"
     BAZ = "qux"
+  }
+  volumes = {
+    "/mnt/data" = {
+      id          = "vol-1234567890abcdef0"
+      device_name = "/dev/sdf"
+      format      = false  # Must be pre-formatted (default)
+    }
+    "/mnt/logs" = {
+      id          = "vol-0987654321fedcba0"
+      device_name = "/dev/sdg"
+      format      = true   # Will auto-format with ext4 if unformatted
+    }
   }
 }
 ```
@@ -57,6 +69,7 @@ module "ec2" {
 | `access_key`         | string        | `null`        | SSH key name for instance access (enables port 22/SSH) |
 | `secrets`            | map(string)   | `{}`          | Map of environment prefix to AWS Secrets Manager secret ID |
 | `environment`        | map(string)   | `{}`          | Static environment variables to make available to the scripts |
+| `volumes`            | map(object)   | `{}`          | Map of mount points to volume config. Key is mount point, value has: `id`, `device_name`, `format` (optional bool, default false). **Volumes must be pre-formatted unless `format=true`** |
 | `sync_period`        | number        | `600`         | Seconds between maintenance/script runs |
 | `permissions_boundary`| string       | `null`        | IAM permissions boundary ARN (optional) |
 | `vpc_id`             | string        | required      | VPC ID for the instance |
@@ -67,8 +80,28 @@ module "ec2" {
 | Name            | Description |
 |-----------------|-------------|
 | `ec2_public_ip` | The public IP address of the EC2 instance |
-| `iam_role`      | The IAM role ARN used by the instance |
-| `ec2_instance`  | The full aws_instance resource |
+| `iam_role`          | The IAM role ARN used by the instance |
+| `ec2_instance`      | The full aws_instance resource |
+| `volume_attachments`| Map of volume attachment resources (empty if no volumes attached) |
+
+## Volume Management
+
+**Important**: By default, EBS volumes must be pre-formatted with a filesystem before being attached. The module will fail if it attempts to mount an unformatted volume unless you set `format = true` for that volume.
+
+### Auto-formatting (optional)
+Set `format = true` in the volume configuration to automatically create an ext4 filesystem on unformatted volumes. **Warning**: This will destroy any existing data if the volume appears unformatted.
+
+### Manual formatting
+To format a new EBS volume manually:
+1. Attach it to a temporary EC2 instance
+2. Run: `sudo mkfs -t ext4 /dev/xvdf` (adjust device name as needed)
+3. Detach and use with this module
+
+The module will automatically:
+- Wait for volumes to attach
+- Handle device name translation (e.g., `/dev/sdf` → `/dev/xvdf`)
+- Mount volumes at specified mount points
+- Add entries to `/etc/fstab` for persistence across reboots
 
 ## Secrets Handling
 Secrets defined in the `secrets` variable are fetched from AWS Secrets Manager. Each secret is loaded and its key-value pairs are converted to environment variables, prefixed and uppercased. For example, if you define:

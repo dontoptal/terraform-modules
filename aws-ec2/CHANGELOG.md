@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+- Add support for attaching and mounting multiple persistent EBS volumes via `volumes` variable (map where key is mount point, value contains `id`, `device_name`, and optional `format`).
+- Volumes must be pre-formatted with a filesystem (e.g., ext4) before attachment, unless `format = true` is set.
+- Optional per-volume `format` parameter (default: false) enables automatic ext4 filesystem creation on unformatted volumes.
+- Automatically mounts volumes and adds to /etc/fstab for persistence across reboots.
+
 ## 1.2.3
 - Fix: Fixed indentation of generated shell script.
 

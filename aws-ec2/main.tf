@@ -91,6 +91,18 @@ resource "aws_instance" "instance" {
     }
   )
 }
+
+# Attach EBS volumes if provided
+resource "aws_volume_attachment" "volume_attach" {
+  for_each = var.volumes
+  
+  device_name = each.value.device_name
+  volume_id   = each.value.id
+  instance_id = aws_instance.instance.id
+  
+  # Prevent volume from being detached when instance is stopped
+  skip_destroy = true
+}
 locals {
   setup_ec2_for_docker_compose_script = <<EOF
 #!/bin/bash
@@ -115,7 +127,69 @@ setup() {
 
 install_requirements() {
   noop
+  mount_volume
   ${var.install_script}
+}
+
+mount_volume() {
+  ${length(var.volumes) > 0 ? join("\n", [
+    for mount_point, vol in var.volumes :
+    <<MOUNT
+# Wait for volume to be attached: ${vol.id}
+DEVICE="${vol.device_name}"
+MOUNT_POINT="${mount_point}"
+MAX_WAIT=60
+WAITED=0
+
+# Modern kernels may rename /dev/sdf to /dev/xvdf
+if [ ! -e "$DEVICE" ]; then
+  ALT_DEVICE="$${DEVICE/sd/xvd}"
+  if [ -e "$ALT_DEVICE" ]; then
+    DEVICE="$ALT_DEVICE"
+  fi
+fi
+
+while [ ! -e "$DEVICE" ] && [ $WAITED -lt $MAX_WAIT ]; do
+  echo "Waiting for volume to attach at $DEVICE..."
+  sleep 2
+  WAITED=$((WAITED + 2))
+done
+
+if [ ! -e "$DEVICE" ]; then
+  echo "ERROR: Volume device $DEVICE not found after $${MAX_WAIT}s"
+  exit 1
+fi
+
+# Create mount point
+mkdir -p "$MOUNT_POINT"
+
+# Check if volume has a filesystem
+if ! blkid "$DEVICE"; then
+  ${vol.format ? <<FORMAT
+  echo "Volume $DEVICE has no filesystem. Creating ext4 filesystem..."
+  mkfs -t ext4 "$DEVICE"
+FORMAT
+: <<NOFORMAT
+  echo "ERROR: Volume $DEVICE has no filesystem. Please format the volume before attaching."
+  echo "You can format it with: mkfs -t ext4 $DEVICE"
+  echo "Or set format=true in the volume configuration to auto-format."
+  exit 1
+NOFORMAT
+}
+fi
+
+# Mount the volume
+mount "$DEVICE" "$MOUNT_POINT"
+
+# Add to fstab for persistence across reboots
+if ! grep -q "$DEVICE" /etc/fstab; then
+  UUID=$(blkid -s UUID -o value "$DEVICE")
+  echo "UUID=$UUID $MOUNT_POINT ext4 defaults,nofail 0 2" >> /etc/fstab
+fi
+
+echo "Volume mounted at $MOUNT_POINT"
+MOUNT
+  ]) : "noop"}
 }
 
 install_cloudwatch_logging() {
