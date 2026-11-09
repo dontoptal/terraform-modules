@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+- Add `cloudwatch_agent_enabled`, `cloudwatch_metrics_enabled`, `cloudwatch_metrics_interval` and `cloudwatch_metrics_namespace` variables, passed through to the aws-ec2 module.
+- Updated aws-ec2 dependency to 1.4.0.
+
 ## 1.2.4
 - Fix: Updated aws-ec2 dependency to 1.2.3 for shell script indentation fix.
 

@@ -13,6 +13,7 @@ This Terraform module (`aws-ec2-docker-compose`) provisions an EC2 instance pre-
 - Supports static environment variables
 - Supports custom install and maintenance scripts (`install_script`, `maintenance_script`)
 - **Supports configurable CloudWatch log retention days via `aws_log_retention_days` (default: 90)**
+- **Optional CloudWatch agent: can be disabled (`cloudwatch_agent_enabled`) or extended to publish memory/disk metrics (`cloudwatch_metrics_enabled`)**
 
 ## Usage Example
 ```hcl
@@ -25,6 +26,7 @@ module "ec2_docker_compose" {
   aws_account          = "123456789012"
   aws_log_group        = "/aws/my-app/logs"
   aws_log_retention_days = 30 # <--- Optional! Default: 90
+  cloudwatch_metrics_enabled = true # <--- Optional! Publish memory/disk metrics. Default: false
   published_ports      = [80, 443]
   vpc_id               = "vpc-xxxxxxxx"
   subnet_ids           = ["subnet-xxxxxxxx"]
@@ -64,6 +66,10 @@ module "ec2_docker_compose" {
 | `aws_account`         | string         | AWS Account number |
 | `aws_log_group`       | string         | CloudWatch log group name |
 | `aws_log_retention_days` | number      | Number of days to retain log streams (default: 90) |
+| `cloudwatch_agent_enabled` | bool      | Install the CloudWatch agent to ship `/var/log/*.log` (default: true). Container logs use the awslogs driver regardless |
+| `cloudwatch_metrics_enabled` | bool    | Also publish memory and disk usage metrics via the agent (default: false) |
+| `cloudwatch_metrics_interval` | number | Seconds between metric collections (default: 60) |
+| `cloudwatch_metrics_namespace` | string | CloudWatch namespace for metrics (default: `CWAgent`) |
 | `instance_type`       | string         | EC2 instance type (default: t3.micro) |
 | `access_key`          | string         | SSH key name for instance access (optional) |
 | `secrets`             | map(string)    | Map of env var prefix to AWS Secrets Manager secret ID |

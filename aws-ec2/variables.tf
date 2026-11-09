@@ -52,6 +52,30 @@ variable "aws_log_retention_days" {
   description = "Number of days to retain CloudWatch log streams (log_retention). Used by the EC2 instance for log retention."
 }
 
+variable "cloudwatch_agent_enabled" {
+  type = bool
+  default = true
+  description = "Install and configure the CloudWatch agent to ship /var/log/*.log to the CloudWatch log group. Set to false to skip installing the agent."
+}
+
+variable "cloudwatch_metrics_enabled" {
+  type = bool
+  default = false
+  description = "Have the CloudWatch agent also publish memory and disk usage metrics (dimensioned by InstanceId). Requires cloudwatch_agent_enabled."
+}
+
+variable "cloudwatch_metrics_interval" {
+  type = number
+  default = 60
+  description = "Seconds between metric collections when cloudwatch_metrics_enabled is true."
+}
+
+variable "cloudwatch_metrics_namespace" {
+  type = string
+  default = "CWAgent"
+  description = "CloudWatch namespace for metrics published by the agent when cloudwatch_metrics_enabled is true."
+}
+
 variable "instance_type" {
   type = string
   default = "t3.micro"

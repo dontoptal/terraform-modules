@@ -10,18 +10,20 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 - Automatically fetches secrets from AWS Secrets Manager and exposes them as environment variables
 - **Allows setting static environment variables via the `environment` variable**
 - **Supports configurable CloudWatch log retention days via `aws_log_retention_days` (default: 90)**
+- **Optional CloudWatch agent: can be disabled (`cloudwatch_agent_enabled`) or extended to publish memory/disk metrics (`cloudwatch_metrics_enabled`)**
 - Tags resources appropriately for traceability
 
 ## Usage Example
 ```hcl
 module "ec2" {
-  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.3.0"
+  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.4.0"
   name              = "app-server"
   vpc_id            = "vpc-12345678"
   subnet_ids        = ["subnet-1234abcd"]
   aws_region        = "us-east-1"
   aws_log_group     = "/aws/custom/app-server"
   aws_log_retention_days = 60 # <--- Optional! Default: 90
+  cloudwatch_metrics_enabled = true # <--- Optional! Publish memory/disk metrics. Default: false
   published_ports   = [8080, 443]
   access_key        = "my-ssh-key"
   instance_type     = "t3.micro"
@@ -65,6 +67,10 @@ module "ec2" {
 | `aws_account`        | string        | `null`        | AWS account number (optional) |
 | `aws_log_group`      | string        | required      | CloudWatch log group name |
 | `aws_log_retention_days` | number     | `90`          | Number of days to retain CloudWatch log streams |
+| `cloudwatch_agent_enabled` | bool    | `true`        | Install the CloudWatch agent and ship `/var/log/*.log` to the log group |
+| `cloudwatch_metrics_enabled` | bool  | `false`       | Also publish memory (`mem_used_percent`) and disk (`used_percent`) metrics, dimensioned by `InstanceId`. Requires the agent to be enabled |
+| `cloudwatch_metrics_interval` | number | `60`        | Seconds between metric collections |
+| `cloudwatch_metrics_namespace` | string | `"CWAgent"` | CloudWatch namespace for published metrics |
 | `instance_type`      | string        | `"t3.micro"` | EC2 instance type |
 | `access_key`         | string        | `null`        | SSH key name for instance access (enables port 22/SSH) |
 | `secrets`            | map(string)   | `{}`          | Map of environment prefix to AWS Secrets Manager secret ID |

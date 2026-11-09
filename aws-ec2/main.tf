@@ -14,6 +14,44 @@ locals {
   iam_role_name_from_arn = var.iam_role_arn != null ? (
     length(regexall("([^/:]+)$", var.iam_role_arn)) > 0 ? regex("([^/:]+)$", var.iam_role_arn)[0] : var.iam_role_arn
   ) : null
+
+  cloudwatch_agent_config = jsonencode(merge(
+    {
+      logs = {
+        logs_collected = {
+          files = {
+            collect_list = [
+              {
+                file_path         = "/var/log/*.log"
+                log_group_name    = var.aws_log_group
+                log_stream_name   = "tf-aws-ec2"
+                retention_in_days = var.aws_log_retention_days
+              }
+            ]
+          }
+        }
+      }
+    },
+    var.cloudwatch_metrics_enabled ? {
+      metrics = {
+        namespace = var.cloudwatch_metrics_namespace
+        append_dimensions = {
+          InstanceId = "$${aws:InstanceId}"
+        }
+        metrics_collected = {
+          mem = {
+            measurement                 = ["mem_used_percent"]
+            metrics_collection_interval = var.cloudwatch_metrics_interval
+          }
+          disk = {
+            measurement                 = ["used_percent"]
+            resources                   = ["*"]
+            metrics_collection_interval = var.cloudwatch_metrics_interval
+          }
+        }
+      }
+    } : {}
+  ))
 }
 
 # Security group allowing SSH + Published Ports
@@ -120,7 +158,7 @@ main() {
 }
 
 setup() {
-  install_cloudwatch_logging
+  ${var.cloudwatch_agent_enabled ? "install_cloudwatch_logging" : "dnf install -y jq"}
   install_requirements
   install_boot_script "$BOOT_SCRIPT"
 }
@@ -199,23 +237,8 @@ install_cloudwatch_logging() {
   # Configure awslogs to use the correct region and log group
   sed -i "s/region = .*/region = ${var.aws_region}/" /etc/awslogs/awscli.conf
   sudo mkdir -p /etc/awslogs/config/
-  cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOL
-  {
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/log/*.log",
-            "log_group_name": "$AWS_LOG_GROUP",
-            "log_stream_name": "tf-aws-ec2",
-            "retention_in_days": ${var.aws_log_retention_days}
-          }
-        ]
-      }
-    }
-  }
-}
+  cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'EOL'
+${local.cloudwatch_agent_config}
 EOL
 
   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
