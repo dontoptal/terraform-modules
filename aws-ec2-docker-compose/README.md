@@ -71,6 +71,7 @@ module "ec2_docker_compose" {
 | `cloudwatch_metrics_interval` | number | Seconds between metric collections (default: 60) |
 | `cloudwatch_metrics_namespace` | string | CloudWatch namespace for metrics (default: `CWAgent`) |
 | `instance_type`       | string         | EC2 instance type (default: t3.micro) |
+| `ami_id`              | string         | AMI ID to use (default: built-in Amazon Linux 2023 AMI for the region). Must be dnf-based |
 | `access_key`          | string         | SSH key name for instance access (optional) |
 | `secrets`             | map(string)    | Map of env var prefix to AWS Secrets Manager secret ID |
 | `sync_period`         | number         | Seconds between periodic maintenance (default: 600) |
@@ -105,7 +106,7 @@ See `variables.tf` for full details.
 
 ## Notes
 - SSH access (port 22) is only enabled if `access_key` is set.
-- Extend the AMI map in the underlying EC2 module if you need other regions.
+- Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
 - You may use your own IAM role/profile by setting `iam_role_arn`.
 
 ## License

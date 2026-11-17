@@ -73,6 +73,12 @@ variable "instance_type" {
   default = "t3.micro"
 }
 
+variable "ami_id" {
+  type = string
+  default = null
+  description = "AMI ID to launch the instance from. If not set, the built-in Amazon Linux 2023 AMI for aws_region is used. The AMI must be dnf-based (e.g. Amazon Linux 2023), as the install scripts use dnf."
+}
+
 variable "access_key" {
   type = string
   default = null
