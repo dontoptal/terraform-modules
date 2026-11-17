@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.5.0
+- Add optional `ami_id` variable to override the AMI. Defaults to `null`, which keeps using the built-in Amazon Linux 2023 AMI for `aws_region`. Also allows use in regions not in the built-in map.
+
 ## 1.4.0
 - Add `cloudwatch_agent_enabled` (default: true) to optionally skip installing the CloudWatch agent.
 - Add optional memory and disk usage metrics via `cloudwatch_metrics_enabled` (default: false), with `cloudwatch_metrics_interval` (default: 60) and `cloudwatch_metrics_namespace` (default: `CWAgent`).

@@ -16,7 +16,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 ## Usage Example
 ```hcl
 module "ec2" {
-  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.4.0"
+  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.5.0"
   name              = "app-server"
   vpc_id            = "vpc-12345678"
   subnet_ids        = ["subnet-1234abcd"]
@@ -72,6 +72,7 @@ module "ec2" {
 | `cloudwatch_metrics_interval` | number | `60`        | Seconds between metric collections |
 | `cloudwatch_metrics_namespace` | string | `"CWAgent"` | CloudWatch namespace for published metrics |
 | `instance_type`      | string        | `"t3.micro"` | EC2 instance type |
+| `ami_id`             | string        | `null`        | AMI ID to use. Defaults to the built-in Amazon Linux 2023 AMI for `aws_region`. Must be dnf-based |
 | `access_key`         | string        | `null`        | SSH key name for instance access (enables port 22/SSH) |
 | `secrets`            | map(string)   | `{}`          | Map of environment prefix to AWS Secrets Manager secret ID |
 | `environment`        | map(string)   | `{}`          | Static environment variables to make available to the scripts |
@@ -125,12 +126,12 @@ Then the key `password` in the secret will become `APP_PASSWORD` in the instance
 ## Requirements
 - Terraform 0.13+
 - AWS provider
-- Supported regions: `us-east-1`, `eu-west-1` (for built-in AMI map, can be extended)
+- Supported regions: `us-east-1`, `eu-west-1` (for the built-in AMI map; use `ami_id` for other regions)
 
 ## Notes
 - By default, the EC2 instance receives a basic CloudWatch Agent role for logging.
 - SSH access is only enabled if you set `access_key`.
-- Extend the AMI map in `main.tf` if you need other regions.
+- Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
 
 ## License
 MIT or as specified by the repository.

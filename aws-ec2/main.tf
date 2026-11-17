@@ -110,7 +110,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
 # EC2 instance
 resource "aws_instance" "instance" {
-  ami           = local.ami_ids[var.aws_region] # Amazon Linux 2 per region
+  ami           = var.ami_id != null ? var.ami_id : local.ami_ids[var.aws_region]
   instance_type = var.instance_type
   subnet_id     = var.subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
