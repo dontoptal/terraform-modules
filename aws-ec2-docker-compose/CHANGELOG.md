@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0
+- The docker-compose.yml is now embedded in the user data as a plain-text heredoc rather than base64, so changes to it are readable in `terraform plan` diffs.
+- Note: changing how the file is embedded alters `user_data`, so existing instances will be replaced once on upgrade.
+
 ## 1.4.0
 - Add optional `ami_id` variable, passed through to the aws-ec2 module. Defaults to the built-in AMI for the region.
 - Updated aws-ec2 dependency to 1.5.0.

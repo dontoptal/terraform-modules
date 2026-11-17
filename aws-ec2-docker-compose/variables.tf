@@ -1,5 +1,10 @@
 variable "docker_compose_yaml" {
   type = string
+
+  validation {
+    condition     = !can(regex("(?m)^DOCKER_COMPOSE_YAML_EOF$", var.docker_compose_yaml))
+    error_message = "docker_compose_yaml must not contain a line consisting solely of DOCKER_COMPOSE_YAML_EOF."
+  }
 }
 
 variable "name" {

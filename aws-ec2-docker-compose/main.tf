@@ -1,5 +1,5 @@
 locals {
-  docker_compose_yaml_base64 = base64encode(var.docker_compose_yaml)
+  docker_compose_yaml = trimsuffix(var.docker_compose_yaml, "\n")
 }
 
 module "ec2" {
@@ -41,7 +41,9 @@ module "ec2" {
   
   # Move your docker-compose.yml
   mkdir -p /home/ec2-user/myapp
-  echo '${local.docker_compose_yaml_base64}' | base64 -d > /tmp/docker-compose.yml
+  cat > /tmp/docker-compose.yml <<'DOCKER_COMPOSE_YAML_EOF'
+${local.docker_compose_yaml}
+DOCKER_COMPOSE_YAML_EOF
 
   yq eval '
     . as $root
