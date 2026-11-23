@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1
+- Fix: changing `root_volume_size` now forces instance replacement so the root filesystem grows on first boot.
+- Updated aws-ec2 dependency to 1.6.1.
+
 ## 1.6.0
 - Add optional `root_volume_size` variable, passed through to the aws-ec2 module. Defaults to the AMI's root volume size.
 - Updated aws-ec2 dependency to 1.6.0.

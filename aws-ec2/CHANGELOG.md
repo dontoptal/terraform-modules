@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.6.1
+- Fix: changing `root_volume_size` now forces instance replacement. The AWS provider resizes root volumes in place, which left the AL2023 partition and filesystem at their original size; the new size is included in `user_data` so the existing `user_data_replace_on_change` behaviour recreates the instance and cloud-init grows the filesystem on first boot.
+
 ## 1.6.0
 - Add optional `root_volume_size` variable to set the root EBS volume size in GiB. Defaults to `null`, which keeps the size from the AMI. Changing it on an existing instance forces replacement.
 

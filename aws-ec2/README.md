@@ -135,7 +135,7 @@ Then the key `password` in the secret will become `APP_PASSWORD` in the instance
 - Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
 
 ## Root Volume Size
-The root disk size comes from the AMI unless `root_volume_size` is set. Use it to give the instance more space at launch, for example for Docker images and logs. The value must be at least the size of the AMI snapshot, and changing it on an existing instance forces replacement. EBS storage is billed for the provisioned GiB, so a larger root volume increases the monthly cost even if the space is unused.
+The root disk size comes from the AMI unless `root_volume_size` is set. Use it to give the instance more space at launch, for example for Docker images and logs. The value must be at least the size of the AMI snapshot. Changing it on an existing instance forces replacement: the AWS provider otherwise resizes the volume in place, leaving the AL2023 partition and filesystem at their old size. Recreating the instance lets cloud-init grow the filesystem on first boot. EBS storage is billed for the provisioned GiB, so a larger root volume increases the monthly cost even if the space is unused.
 
 ## License
 MIT or as specified by the repository.

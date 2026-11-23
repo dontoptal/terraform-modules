@@ -87,7 +87,7 @@ variable "ami_id" {
 variable "root_volume_size" {
   type        = number
   default     = null
-  description = "Size of the root EBS volume in GiB. Null inherits the size from the AMI. Must be at least as large as the AMI snapshot. Changing this on an existing instance forces replacement."
+  description = "Size of the root EBS volume in GiB. Null inherits the size from the AMI. Must be at least as large as the AMI snapshot. Changing this on an existing instance forces replacement so cloud-init can grow the filesystem on first boot."
 }
 
 variable "access_key" {

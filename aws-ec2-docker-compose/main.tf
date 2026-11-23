@@ -3,7 +3,7 @@ locals {
 }
 
 module "ec2" {
-  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.6.0"
+  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.6.1"
   aws_region = var.aws_region
   ami_id = var.ami_id
   root_volume_size = var.root_volume_size

@@ -149,8 +149,13 @@ resource "aws_volume_attachment" "volume_attach" {
   skip_destroy = true
 }
 locals {
+  # The AWS provider resizes root volumes in place. Including the size in user_data
+  # makes any change to it force instance replacement (via user_data_replace_on_change),
+  # so cloud-init can grow the partition and filesystem on first boot.
   setup_ec2_for_docker_compose_script = <<EOF
 #!/bin/bash
+
+# root_volume_size: ${var.root_volume_size}
 
 BOOT_SCRIPT=/var/lib/cloud/scripts/per-boot/run-services.sh
 
