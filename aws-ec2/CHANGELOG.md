@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.6.0
+- Add optional `root_volume_size` variable to set the root EBS volume size in GiB. Defaults to `null`, which keeps the size from the AMI. Changing it on an existing instance forces replacement.
+
 ## 1.5.0
 - Add optional `ami_id` variable to override the AMI. Defaults to `null`, which keeps using the built-in Amazon Linux 2023 AMI for `aws_region`. Also allows use in regions not in the built-in map.
 

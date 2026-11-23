@@ -72,6 +72,7 @@ module "ec2_docker_compose" {
 | `cloudwatch_metrics_namespace` | string | CloudWatch namespace for metrics (default: `CWAgent`) |
 | `instance_type`       | string         | EC2 instance type (default: t3.micro) |
 | `ami_id`              | string         | AMI ID to use (default: built-in Amazon Linux 2023 AMI for the region). Must be dnf-based |
+| `root_volume_size`    | number         | Root EBS volume size in GiB (default: `null`, inherit from the AMI). Must be at least the AMI snapshot size; changing it forces instance replacement |
 | `access_key`          | string         | SSH key name for instance access (optional) |
 | `secrets`             | map(string)    | Map of env var prefix to AWS Secrets Manager secret ID |
 | `sync_period`         | number         | Seconds between periodic maintenance (default: 600) |

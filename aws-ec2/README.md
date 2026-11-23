@@ -73,6 +73,7 @@ module "ec2" {
 | `cloudwatch_metrics_namespace` | string | `"CWAgent"` | CloudWatch namespace for published metrics |
 | `instance_type`      | string        | `"t3.micro"` | EC2 instance type |
 | `ami_id`             | string        | `null`        | AMI ID to use. Defaults to the built-in Amazon Linux 2023 AMI for `aws_region`. Must be dnf-based |
+| `root_volume_size`   | number        | `null`        | Root EBS volume size in GiB. `null` keeps the AMI's size. Must be at least the AMI snapshot size; changing it forces instance replacement |
 | `access_key`         | string        | `null`        | SSH key name for instance access (enables port 22/SSH) |
 | `secrets`            | map(string)   | `{}`          | Map of environment prefix to AWS Secrets Manager secret ID |
 | `environment`        | map(string)   | `{}`          | Static environment variables to make available to the scripts |
@@ -132,6 +133,9 @@ Then the key `password` in the secret will become `APP_PASSWORD` in the instance
 - By default, the EC2 instance receives a basic CloudWatch Agent role for logging.
 - SSH access is only enabled if you set `access_key`.
 - Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
+
+## Root Volume Size
+The root disk size comes from the AMI unless `root_volume_size` is set. Use it to give the instance more space at launch, for example for Docker images and logs. The value must be at least the size of the AMI snapshot, and changing it on an existing instance forces replacement. EBS storage is billed for the provisioned GiB, so a larger root volume increases the monthly cost even if the space is unused.
 
 ## License
 MIT or as specified by the repository.

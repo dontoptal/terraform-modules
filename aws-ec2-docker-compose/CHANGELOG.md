@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0
+- Add optional `root_volume_size` variable, passed through to the aws-ec2 module. Defaults to the AMI's root volume size.
+- Updated aws-ec2 dependency to 1.6.0.
+
 ## 1.5.0
 - The docker-compose.yml is now embedded in the user data as a plain-text heredoc rather than base64, so changes to it are readable in `terraform plan` diffs.
 - Note: changing how the file is embedded alters `user_data`, so existing instances will be replaced once on upgrade.

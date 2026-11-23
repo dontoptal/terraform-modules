@@ -87,6 +87,17 @@ variable "ami_id" {
   description = "AMI ID to launch the instance from. If not set, the built-in Amazon Linux 2023 AMI for aws_region is used. The AMI must be dnf-based (e.g. Amazon Linux 2023), as the install scripts use dnf."
 }
 
+variable "root_volume_size" {
+  type        = number
+  default     = null
+  description = "Size of the root EBS volume in GiB. Null inherits the size from the AMI. Must be at least as large as the AMI snapshot. Changing this on an existing instance forces replacement."
+
+  validation {
+    condition     = var.root_volume_size == null ? true : var.root_volume_size > 0
+    error_message = "root_volume_size must be greater than zero, or null to use the AMI default."
+  }
+}
+
 variable "access_key" {
   type = string
   default = null

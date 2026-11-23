@@ -120,6 +120,13 @@ resource "aws_instance" "instance" {
   user_data_replace_on_change = true
   user_data = local.setup_ec2_for_docker_compose_script
 
+  dynamic "root_block_device" {
+    for_each = var.root_volume_size != null ? [1] : []
+    content {
+      volume_size = var.root_volume_size
+    }
+  }
+
   tags = merge(
     var.tags,
     {
