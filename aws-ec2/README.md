@@ -4,7 +4,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 
 ## Features
 - Provisions a single EC2 instance with selectable instance type and AMI (Amazon Linux 2023 by default for supported regions)
-- Creates and attaches a security group allowing SSH (if `access_key` is set) and any additional published ports
+- Creates and attaches a security group allowing SSH (if `access_key` is set) and any additional published ports, with sources configurable per port via `ingress_rules` (including a `"*"` catchall)
 - Optionally creates and attaches an IAM role and instance profile, or attaches an existing one
 - Supports execution of custom install and maintenance scripts via user data
 - Automatically fetches secrets from AWS Secrets Manager and exposes them as environment variables
@@ -16,7 +16,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 ## Usage Example
 ```hcl
 module "ec2" {
-  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.5.0"
+  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.7.0"
   name              = "app-server"
   vpc_id            = "vpc-12345678"
   subnet_ids        = ["subnet-1234abcd"]
@@ -25,6 +25,11 @@ module "ec2" {
   aws_log_retention_days = 60 # <--- Optional! Default: 90
   cloudwatch_metrics_enabled = true # <--- Optional! Publish memory/disk metrics. Default: false
   published_ports   = [8080, 443]
+  ingress_rules = {
+    "*"   = { cidr_blocks = ["10.0.0.0/8"] }     # all published ports, including SSH
+    "22"  = { cidr_blocks = ["203.0.113.0/24"] } # SSH from admin CIDR only
+    "443" = { security_groups = ["sg-0abc123def456789"] }
+  }
   access_key        = "my-ssh-key"
   instance_type     = "t3.micro"
   tags = {
@@ -58,7 +63,8 @@ module "ec2" {
 |----------------------|---------------|---------------|-------------|
 | `install_script`     | string        | `""`         | Bash commands to run during instance provisioning (install phase) |
 | `maintenance_script` | string        | `""`         | Bash commands to run periodically (maintenance phase) |
-| `published_ports`    | list(number)  | `[]`          | TCP ports to open to the world (besides SSH) |
+| `published_ports`    | list(number)  | `[]`          | TCP ports to open (besides SSH); sources are set by `ingress_rules` |
+| `ingress_rules`      | map(object)   | `{ "*" = { cidr_blocks = ["0.0.0.0/0"] } }` | Per-port sources: `cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids` and optional `description`. Keys are port strings or `"*"` for the catchall; a numeric key also opens that port. `{}` closes all ingress |
 | `name`               | string        | required      | Name for resources |
 | `prefix`             | string        | `""`         | Prefix for resource names |
 | `suffix`             | string        | `""`         | Suffix for resource names |
@@ -133,6 +139,23 @@ Then the key `password` in the secret will become `APP_PASSWORD` in the instance
 - By default, the EC2 instance receives a basic CloudWatch Agent role for logging.
 - SSH access is only enabled if you set `access_key`.
 - Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
+
+## Ingress rules
+`ingress_rules` controls who can reach the TCP ports opened by the module. The key `"*"` is the catchall applied to any port that does not have its own entry (including SSH when `access_key` is set); a numeric key overrides the catchall for that port and also opens the port if it is not in `published_ports`. The default catchall allows `0.0.0.0/0`, preserving the previous behaviour.
+
+```hcl
+ingress_rules = {
+  "*"   = { cidr_blocks = ["10.0.0.0/8"] }     # all published ports, including SSH
+  "22"  = { cidr_blocks = ["203.0.113.0/24"] } # SSH restricted to an admin CIDR
+  "443" = {
+    security_groups  = ["sg-0abc123def456789"]
+    prefix_list_ids  = ["pl-0123456789abcdef0"]
+    description      = "HTTPS from the load balancer"
+  }
+}
+```
+
+Setting `ingress_rules = {}` removes all ingress rules (egress is unchanged). Each rule must declare at least one of `cidr_blocks`, `ipv6_cidr_blocks`, `security_groups` or `prefix_list_ids`.
 
 ## Root Volume Size
 The root disk size comes from the AMI unless `root_volume_size` is set. Use it to give the instance more space at launch, for example for Docker images and logs. The value must be at least the size of the AMI snapshot. Changing it on an existing instance forces replacement: the AWS provider otherwise resizes the volume in place, leaving the AL2023 partition and filesystem at their old size. Recreating the instance lets cloud-init grow the filesystem on first boot. EBS storage is billed for the provisioned GiB, so a larger root volume increases the monthly cost even if the space is unused.

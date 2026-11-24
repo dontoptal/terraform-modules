@@ -13,6 +13,38 @@ variable "published_ports" {
   default = []
 }
 
+variable "ingress_rules" {
+  type = map(object({
+    cidr_blocks      = optional(list(string), [])
+    ipv6_cidr_blocks = optional(list(string), [])
+    security_groups  = optional(list(string), [])
+    prefix_list_ids  = optional(list(string), [])
+    description      = optional(string)
+  }))
+  default = {
+    "*" = {
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  description = "Sources allowed to reach TCP ingress. Keys are port numbers as strings (e.g. \"443\") or \"*\" for the catchall used by any port without its own rule, including SSH when access_key is set. A numeric key also opens that port even if it is not listed in published_ports. An empty map closes all ingress."
+
+  validation {
+    condition = alltrue([
+      for port in keys(var.ingress_rules) :
+      port == "*" || try(tonumber(port) >= 1 && tonumber(port) <= 65535 && tostring(tonumber(port)) == port, false)
+    ])
+    error_message = "ingress_rules keys must be \"*\" or a port number from 1 to 65535 written as a plain decimal string (e.g. \"443\")."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in values(var.ingress_rules) :
+      length(rule.cidr_blocks) + length(rule.ipv6_cidr_blocks) + length(rule.security_groups) + length(rule.prefix_list_ids) > 0
+    ])
+    error_message = "Each ingress_rules entry must include at least one of cidr_blocks, ipv6_cidr_blocks, security_groups or prefix_list_ids."
+  }
+}
+
 variable "name" {
   type = string
 }

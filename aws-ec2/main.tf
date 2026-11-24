@@ -4,6 +4,35 @@ locals {
     (var.access_key != null) ? [ 22 ] : []
   )
 
+  # Fill in omitted source lists so every rule has a uniform shape.
+  ingress_rules = {
+    for port, rule in var.ingress_rules : port => merge({
+      cidr_blocks      = []
+      ipv6_cidr_blocks = []
+      security_groups  = []
+      prefix_list_ids  = []
+      description      = null
+    }, rule)
+  }
+
+  # A rule with an explicit port key opens that port even when it is not in published_ports.
+  ingress_ports = distinct(concat(
+    local.published_ports,
+    [for port in keys(local.ingress_rules) : tonumber(port) if port != "*"],
+  ))
+
+  ingress_rules_by_port_candidates = {
+    for port in local.ingress_ports : tostring(port) => try(
+      local.ingress_rules[tostring(port)],
+      lookup(local.ingress_rules, "*", null),
+    )
+  }
+
+  ingress_rules_by_port = {
+    for port, rule in local.ingress_rules_by_port_candidates : port => rule
+    if rule != null
+  }
+
   # Map of Amazon Linux 2023 AMI IDs per region
   ami_ids = {
     "eu-west-1" = "ami-09c20105c9b62f893"
@@ -60,12 +89,16 @@ resource "aws_security_group" "ec2_sg" {
   vpc_id = var.vpc_id
 
   dynamic "ingress" {
-    for_each = local.published_ports
+    for_each = local.ingress_rules_by_port
     content {
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+      from_port        = tonumber(ingress.key)
+      to_port          = tonumber(ingress.key)
+      protocol         = "tcp"
+      cidr_blocks      = ingress.value.cidr_blocks
+      ipv6_cidr_blocks = ingress.value.ipv6_cidr_blocks
+      security_groups  = ingress.value.security_groups
+      prefix_list_ids  = ingress.value.prefix_list_ids
+      description      = ingress.value.description
     }
   }
 

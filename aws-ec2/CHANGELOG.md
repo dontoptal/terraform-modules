@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.0
+- Add `ingress_rules` variable: per-port sources (`cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids`) with a `"*"` catchall for ports without an explicit rule. Defaults to `["0.0.0.0/0"]` for the catchall, preserving existing behaviour.
+- Explicit port keys also open that port, even if it is not in `published_ports`; an empty map closes all ingress.
+
 ## 1.6.1
 - Fix: changing `root_volume_size` now forces instance replacement. The AWS provider resizes root volumes in place, which left the AL2023 partition and filesystem at their original size; the new size is included in `user_data` so the existing `user_data_replace_on_change` behaviour recreates the instance and cloud-init grows the filesystem on first boot.
 

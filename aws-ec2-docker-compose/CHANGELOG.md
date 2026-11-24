@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.0
+- Add `ingress_rules` variable, passed through to the aws-ec2 module, allowing ingress sources to be restricted per port with a `"*"` catchall. Defaults to `["0.0.0.0/0"]` for the catchall, preserving existing behaviour.
+- Updated aws-ec2 dependency to 1.7.0.
+
 ## 1.6.1
 - Fix: changing `root_volume_size` now forces instance replacement so the root filesystem grows on first boot.
 - Updated aws-ec2 dependency to 1.6.1.

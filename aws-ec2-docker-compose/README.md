@@ -9,6 +9,7 @@ This Terraform module (`aws-ec2-docker-compose`) provisions an EC2 instance pre-
 - Automatically configures AWS CloudWatch logging for all Docker Compose services
 - Injects secrets from AWS Secrets Manager as environment variables
 - Supports custom VPC, subnet, and tagging
+- Restricts ingress sources per port via `ingress_rules`, including a `"*"` catchall for all other ports
 - Allows existing IAM instance profile to be attached, or creates a new one
 - Supports static environment variables
 - Supports custom install and maintenance scripts (`install_script`, `maintenance_script`)
@@ -28,6 +29,11 @@ module "ec2_docker_compose" {
   aws_log_retention_days = 30 # <--- Optional! Default: 90
   cloudwatch_metrics_enabled = true # <--- Optional! Publish memory/disk metrics. Default: false
   published_ports      = [80, 443]
+  ingress_rules = {
+    "*"   = { cidr_blocks = ["10.0.0.0/8"] }     # all published ports, including SSH
+    "22"  = { cidr_blocks = ["203.0.113.0/24"] } # SSH from admin CIDR only
+    "443" = { security_groups = ["sg-0abc123def456789"] }
+  }
   vpc_id               = "vpc-xxxxxxxx"
   subnet_ids           = ["subnet-xxxxxxxx"]
   docker_compose_yaml  = file("./docker-compose.yml")
@@ -60,7 +66,8 @@ module "ec2_docker_compose" {
 | `name`                | string         | Name for resources |
 | `prefix`              | string         | Prefix for resource names (optional) |
 | `suffix`              | string         | Suffix for resource names (optional) |
-| `published_ports`     | list(number)   | TCP ports to open to the world (besides SSH) |
+| `published_ports`     | list(number)   | TCP ports to open (besides SSH); sources are set by `ingress_rules` |
+| `ingress_rules`       | map(object)    | Per-port sources (`cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids`, optional `description`), keyed by port string or `"*"` for the catchall. Defaults to `["0.0.0.0/0"]` for the catchall; `{}` closes all ingress |
 | `tags`                | map(string)    | Additional AWS tags |
 | `aws_region`          | string         | AWS region |
 | `aws_account`         | string         | AWS Account number |
@@ -109,6 +116,7 @@ See `variables.tf` for full details.
 - SSH access (port 22) is only enabled if `access_key` is set.
 - Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
 - You may use your own IAM role/profile by setting `iam_role_arn`.
+- `ingress_rules` restricts who can reach the published ports. `"*"` is the catchall for any port without its own rule (including SSH); a numeric key overrides it for that port and also opens that port. The default catchall is `["0.0.0.0/0"]`, matching the previous behaviour; set `ingress_rules = {}` to close all ingress.
 
 ## License
 MIT or as specified by the repository.

@@ -3,7 +3,7 @@ locals {
 }
 
 module "ec2" {
-  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.6.1"
+  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.7.0"
   aws_region = var.aws_region
   ami_id = var.ami_id
   root_volume_size = var.root_volume_size
@@ -15,6 +15,7 @@ module "ec2" {
   access_key = var.access_key
   instance_type = var.instance_type
   published_ports = var.published_ports
+  ingress_rules = var.ingress_rules
   vpc_id = var.vpc_id
   subnet_ids = var.subnet_ids
   secrets = var.secrets
