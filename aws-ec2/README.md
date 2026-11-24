@@ -5,6 +5,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 ## Features
 - Provisions a single EC2 instance with selectable instance type and AMI (Amazon Linux 2023 by default for supported regions)
 - Creates and attaches a security group allowing SSH (if `access_key` is set) and any additional published ports, with sources configurable per port via `ingress_rules` (including a `"*"` catchall)
+- Assigns an IPv6 address to the instance by default (`ipv6_enabled`), with IPv6 egress and inbound rules to match
 - Optionally creates and attaches an IAM role and instance profile, or attaches an existing one
 - Supports execution of custom install and maintenance scripts via user data
 - Automatically fetches secrets from AWS Secrets Manager and exposes them as environment variables
@@ -16,7 +17,7 @@ This Terraform module provisions an Amazon EC2 instance with optional IAM role/p
 ## Usage Example
 ```hcl
 module "ec2" {
-  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.7.0"
+  source            = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v2.0.0"
   name              = "app-server"
   vpc_id            = "vpc-12345678"
   subnet_ids        = ["subnet-1234abcd"]
@@ -25,8 +26,9 @@ module "ec2" {
   aws_log_retention_days = 60 # <--- Optional! Default: 90
   cloudwatch_metrics_enabled = true # <--- Optional! Publish memory/disk metrics. Default: false
   published_ports   = [8080, 443]
+  ipv6_enabled = true # <--- Default. Set false for IPv4-only subnets
   ingress_rules = {
-    "*"   = { cidr_blocks = ["10.0.0.0/8"] }     # all published ports, including SSH
+    "*"   = { cidr_blocks = ["10.0.0.0/8"], ipv6_cidr_blocks = ["2001:db8::/32"] }
     "22"  = { cidr_blocks = ["203.0.113.0/24"] } # SSH from admin CIDR only
     "443" = { security_groups = ["sg-0abc123def456789"] }
   }
@@ -64,7 +66,8 @@ module "ec2" {
 | `install_script`     | string        | `""`         | Bash commands to run during instance provisioning (install phase) |
 | `maintenance_script` | string        | `""`         | Bash commands to run periodically (maintenance phase) |
 | `published_ports`    | list(number)  | `[]`          | TCP ports to open (besides SSH); sources are set by `ingress_rules` |
-| `ingress_rules`      | map(object)   | `{ "*" = { cidr_blocks = ["0.0.0.0/0"] } }` | Per-port sources: `cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids` and optional `description`. Keys are port strings or `"*"` for the catchall; a numeric key also opens that port. `{}` closes all ingress |
+| `ingress_rules`      | map(object)   | `{ "*" = { cidr_blocks = ["0.0.0.0/0"], ipv6_cidr_blocks = ["::/0"] } }` | Per-port sources: `cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids` and optional `description`. Keys are port strings or `"*"` for the catchall; a numeric key also opens that port. `{}` closes all ingress |
+| `ipv6_enabled`       | bool          | `true`        | Assign one IPv6 address and allow `::/0` egress. Set `false` for IPv4-only VPCs/subnets |
 | `name`               | string        | required      | Name for resources |
 | `prefix`             | string        | `""`         | Prefix for resource names |
 | `suffix`             | string        | `""`         | Suffix for resource names |
@@ -93,7 +96,8 @@ module "ec2" {
 ## Outputs
 | Name            | Description |
 |-----------------|-------------|
-| `ec2_public_ip` | The public IP address of the EC2 instance |
+| `ec2_public_ip` | The public IPv4 address of the EC2 instance |
+| `ec2_ipv6_addresses` | IPv6 addresses assigned to the instance (empty when `ipv6_enabled = false`) |
 | `iam_role`          | The IAM role ARN used by the instance |
 | `ec2_instance`      | The full aws_instance resource |
 | `volume_attachments`| Map of volume attachment resources (empty if no volumes attached) |
@@ -139,13 +143,14 @@ Then the key `password` in the secret will become `APP_PASSWORD` in the instance
 - By default, the EC2 instance receives a basic CloudWatch Agent role for logging.
 - SSH access is only enabled if you set `access_key`.
 - Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
+- IPv6 is enabled by default. The VPC and subnet must have an associated IPv6 CIDR block and a route to `::/0`; set `ipv6_enabled = false` in IPv4-only networks.
 
 ## Ingress rules
-`ingress_rules` controls who can reach the TCP ports opened by the module. The key `"*"` is the catchall applied to any port that does not have its own entry (including SSH when `access_key` is set); a numeric key overrides the catchall for that port and also opens the port if it is not in `published_ports`. The default catchall allows `0.0.0.0/0`, preserving the previous behaviour.
+`ingress_rules` controls who can reach the TCP ports opened by the module. The key `"*"` is the catchall applied to any port that does not have its own entry (including SSH when `access_key` is set); a numeric key overrides the catchall for that port and also opens the port if it is not in `published_ports`. The default catchall allows `0.0.0.0/0` and `::/0`.
 
 ```hcl
 ingress_rules = {
-  "*"   = { cidr_blocks = ["10.0.0.0/8"] }     # all published ports, including SSH
+  "*"   = { cidr_blocks = ["10.0.0.0/8"], ipv6_cidr_blocks = ["2001:db8::/32"] }
   "22"  = { cidr_blocks = ["203.0.113.0/24"] } # SSH restricted to an admin CIDR
   "443" = {
     security_groups  = ["sg-0abc123def456789"]
@@ -156,6 +161,9 @@ ingress_rules = {
 ```
 
 Setting `ingress_rules = {}` removes all ingress rules (egress is unchanged). Each rule must declare at least one of `cidr_blocks`, `ipv6_cidr_blocks`, `security_groups` or `prefix_list_ids`.
+
+## IPv6
+By default the instance requests one IPv6 address, the security group allows `::/0` egress, and the catchall ingress rule allows `::/0` inbound. The VPC and subnet must have an associated IPv6 CIDR block, and the subnet route table needs a route to `::/0` (an internet gateway or egress-only internet gateway). Restrict inbound IPv6 with `ipv6_cidr_blocks` in `ingress_rules`; set `ipv6_enabled = false` to opt out entirely. Assigned addresses are available as the `ec2_ipv6_addresses` output.
 
 ## Root Volume Size
 The root disk size comes from the AMI unless `root_volume_size` is set. Use it to give the instance more space at launch, for example for Docker images and logs. The value must be at least the size of the AMI snapshot. Changing it on an existing instance forces replacement: the AWS provider otherwise resizes the volume in place, leaving the AL2023 partition and filesystem at their old size. Recreating the instance lets cloud-init grow the filesystem on first boot. EBS storage is billed for the provisioned GiB, so a larger root volume increases the monthly cost even if the space is unused.

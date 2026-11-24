@@ -10,6 +10,7 @@ This Terraform module (`aws-ec2-docker-compose`) provisions an EC2 instance pre-
 - Injects secrets from AWS Secrets Manager as environment variables
 - Supports custom VPC, subnet, and tagging
 - Restricts ingress sources per port via `ingress_rules`, including a `"*"` catchall for all other ports
+- Assigns an IPv6 address to the instance by default (`ipv6_enabled`), with IPv6 egress and inbound rules to match
 - Allows existing IAM instance profile to be attached, or creates a new one
 - Supports static environment variables
 - Supports custom install and maintenance scripts (`install_script`, `maintenance_script`)
@@ -29,8 +30,9 @@ module "ec2_docker_compose" {
   aws_log_retention_days = 30 # <--- Optional! Default: 90
   cloudwatch_metrics_enabled = true # <--- Optional! Publish memory/disk metrics. Default: false
   published_ports      = [80, 443]
+  ipv6_enabled = true # <--- Default. Set false for IPv4-only subnets
   ingress_rules = {
-    "*"   = { cidr_blocks = ["10.0.0.0/8"] }     # all published ports, including SSH
+    "*"   = { cidr_blocks = ["10.0.0.0/8"], ipv6_cidr_blocks = ["2001:db8::/32"] }
     "22"  = { cidr_blocks = ["203.0.113.0/24"] } # SSH from admin CIDR only
     "443" = { security_groups = ["sg-0abc123def456789"] }
   }
@@ -67,7 +69,8 @@ module "ec2_docker_compose" {
 | `prefix`              | string         | Prefix for resource names (optional) |
 | `suffix`              | string         | Suffix for resource names (optional) |
 | `published_ports`     | list(number)   | TCP ports to open (besides SSH); sources are set by `ingress_rules` |
-| `ingress_rules`       | map(object)    | Per-port sources (`cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids`, optional `description`), keyed by port string or `"*"` for the catchall. Defaults to `["0.0.0.0/0"]` for the catchall; `{}` closes all ingress |
+| `ingress_rules`       | map(object)    | Per-port sources (`cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids`, optional `description`), keyed by port string or `"*"` for the catchall. Defaults to `["0.0.0.0/0"]` and `["::/0"]` for the catchall; `{}` closes all ingress |
+| `ipv6_enabled`        | bool           | Assign one IPv6 address and allow `::/0` egress (default: `true`). Set `false` for IPv4-only VPCs/subnets |
 | `tags`                | map(string)    | Additional AWS tags |
 | `aws_region`          | string         | AWS region |
 | `aws_account`         | string         | AWS Account number |
@@ -97,6 +100,7 @@ See `variables.tf` for full details.
 | Name          | Description |
 |---------------|-------------|
 | `ec2_instance`| The full aws_instance resource for the EC2 host |
+| `ec2_ipv6_addresses` | IPv6 addresses assigned to the instance (empty when `ipv6_enabled = false`) |
 
 ## How It Works
 - The module renders your `docker-compose.yml` (passed as a variable) onto the EC2 instance.
@@ -116,7 +120,8 @@ See `variables.tf` for full details.
 - SSH access (port 22) is only enabled if `access_key` is set.
 - Set `ami_id` to use your own AMI or to run in a region not in the built-in AMI map.
 - You may use your own IAM role/profile by setting `iam_role_arn`.
-- `ingress_rules` restricts who can reach the published ports. `"*"` is the catchall for any port without its own rule (including SSH); a numeric key overrides it for that port and also opens that port. The default catchall is `["0.0.0.0/0"]`, matching the previous behaviour; set `ingress_rules = {}` to close all ingress.
+- `ingress_rules` restricts who can reach the published ports. `"*"` is the catchall for any port without its own rule (including SSH); a numeric key overrides it for that port and also opens that port. The default catchall allows `0.0.0.0/0` and `::/0`; set `ingress_rules = {}` to close all ingress.
+- IPv6 is enabled by default. The VPC and subnet need an IPv6 CIDR block and a route to `::/0`; set `ipv6_enabled = false` in IPv4-only networks.
 
 ## License
 MIT or as specified by the repository.

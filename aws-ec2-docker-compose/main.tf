@@ -3,7 +3,7 @@ locals {
 }
 
 module "ec2" {
-  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v1.7.0"
+  source = "github.com/dontoptal/terraform-modules//aws-ec2?ref=aws-ec2-v2.0.0"
   aws_region = var.aws_region
   ami_id = var.ami_id
   root_volume_size = var.root_volume_size
@@ -15,7 +15,8 @@ module "ec2" {
   access_key = var.access_key
   instance_type = var.instance_type
   published_ports = var.published_ports
-  ingress_rules = var.ingress_rules
+  ingress_rules                = var.ingress_rules
+  ipv6_enabled                 = var.ipv6_enabled
   vpc_id = var.vpc_id
   subnet_ids = var.subnet_ids
   secrets = var.secrets
@@ -105,4 +106,9 @@ DOCKER_COMPOSE_YAML_EOF
 
 output ec2_instance {
   value = module.ec2.ec2_instance
+}
+
+output "ec2_ipv6_addresses" {
+  value       = module.ec2.ec2_ipv6_addresses
+  description = "IPv6 addresses assigned to the instance"
 }

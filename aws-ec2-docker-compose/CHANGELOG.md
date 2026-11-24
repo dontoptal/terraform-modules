@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0
+- **Breaking:** IPv6 is now enabled by default, passed through to the aws-ec2 module. The default `ingress_rules` catchall allows both IPv4 and IPv6; set `ipv6_enabled = false` for IPv4-only VPCs/subnets.
+- Add `ipv6_enabled` variable and `ec2_ipv6_addresses` output.
+- Updated aws-ec2 dependency to 2.0.0.
+
 ## 1.7.0
 - Add `ingress_rules` variable, passed through to the aws-ec2 module, allowing ingress sources to be restricted per port with a `"*"` catchall. Defaults to `["0.0.0.0/0"]` for the catchall, preserving existing behaviour.
 - Updated aws-ec2 dependency to 1.7.0.

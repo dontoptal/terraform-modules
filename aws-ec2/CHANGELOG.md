@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0
+- **Breaking:** IPv6 is now enabled by default. The instance requests one IPv6 address, the security group allows `::/0` egress, and the default `ingress_rules` catchall allows both `0.0.0.0/0` and `::/0`. Set `ipv6_enabled = false` for IPv4-only VPCs/subnets.
+- Add `ipv6_enabled` variable and `ec2_ipv6_addresses` output.
+
 ## 1.7.0
 - Add `ingress_rules` variable: per-port sources (`cidr_blocks`, `ipv6_cidr_blocks`, `security_groups`, `prefix_list_ids`) with a `"*"` catchall for ports without an explicit rule. Defaults to `["0.0.0.0/0"]` for the catchall, preserving existing behaviour.
 - Explicit port keys also open that port, even if it is not in `published_ports`; an empty map closes all ingress.

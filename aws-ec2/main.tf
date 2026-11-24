@@ -103,10 +103,11 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = var.ipv6_enabled ? ["::/0"] : []
   }
 }
 
@@ -149,6 +150,7 @@ resource "aws_instance" "instance" {
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
   key_name      = var.access_key
+  ipv6_address_count     = var.ipv6_enabled ? 1 : 0
 
   user_data_replace_on_change = true
   user_data = local.setup_ec2_for_docker_compose_script

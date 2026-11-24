@@ -36,10 +36,11 @@ variable "ingress_rules" {
   }))
   default = {
     "*" = {
-      cidr_blocks = ["0.0.0.0/0"]
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
     }
   }
-  description = "Sources allowed to reach TCP ingress, passed through to the aws-ec2 module. Keys are port numbers as strings (e.g. \"443\") or \"*\" for the catchall used by any port without its own rule, including SSH when access_key is set. A numeric key also opens that port even if it is not listed in published_ports. An empty map closes all ingress."
+  description = "Sources allowed to reach TCP ingress, passed through to the aws-ec2 module. Keys are port numbers as strings (e.g. \"443\") or \"*\" for the catchall used by any port without its own rule, including SSH when access_key is set. A numeric key also opens that port even if it is not listed in published_ports. The default catchall allows both IPv4 and IPv6 from anywhere; an empty map closes all ingress."
 
   validation {
     condition = alltrue([
@@ -56,6 +57,12 @@ variable "ingress_rules" {
     ])
     error_message = "Each ingress_rules entry must include at least one of cidr_blocks, ipv6_cidr_blocks, security_groups or prefix_list_ids."
   }
+}
+
+variable "ipv6_enabled" {
+  type        = bool
+  default     = true
+  description = "Assign one IPv6 address to the instance and allow IPv6 egress (::/0), passed through to the aws-ec2 module. Requires an IPv6 CIDR block on the VPC and subnet, plus a route to ::/0. Set to false for IPv4-only subnets."
 }
 
 variable "tags" {
